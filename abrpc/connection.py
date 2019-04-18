@@ -12,6 +12,8 @@ class Connection:
 
     MESSAGE_CALL = 0
     MESSAGE_RESPONSE = 1
+    MESSAGE_CALL_NO_RESPONSE = 2
+
 
     def __init__(self, rw_pair):
         reader, writer = rw_pair
@@ -21,6 +23,10 @@ class Connection:
 
         self.id_counter = 0
         self.running_calls = {}
+        self.on_error_no_response_call = None
+
+    def set_on_error_no_response_call(self, callback):
+        self.on_error_no_response_call = callback
 
     async def close(self):
         self.writer.close()
@@ -28,18 +34,16 @@ class Connection:
         #await self.writer.wait_closed()
 
     async def call(self, method_name, *args):
-        assert isinstance(method_name, str)
-        self.id_counter += 1
-        message = [
-            self.MESSAGE_CALL,
-            self.id_counter,
-            method_name,
-            args
-        ]
         future = asyncio.Future()
         self.running_calls[self.id_counter] = future
-        await self._send_message(message)
+        await self._send_call(method_name, args, False)
         return await future
+
+    async def call_no_response(self, method_name, *args):
+        if self.on_error_no_response_call is None:
+            raise Exception(
+                "No error handler set for no_response calls. Use set_on_error_resposen_call()")
+        await self._send_call(method_name, args, True)
 
     async def serve(self, service=None):
         assert not self.service_running
@@ -53,23 +57,37 @@ class Connection:
                     raise Exception("Invalid message (Invalid wrapper)")
             # CALL
             if message[0] == self.MESSAGE_CALL:
-                    asyncio.ensure_future(
-                        self._run_method(service,
-                                         message[1],
-                                         message[2],
-                                         message[3]))
-
+                asyncio.ensure_future(
+                    self._run_method(service, message[1], message[2], message[3], False))
+            # CALL_NO_RESPONSE
+            elif message[0] == self.MESSAGE_CALL_NO_RESPONSE:
+                asyncio.ensure_future(
+                    self._run_method(service, message[1], message[2], message[3], True))
             # RESPOSE
             elif message[0] == self.MESSAGE_RESPONSE:
-                future = self.running_calls.pop(message[1])
+                future = self.running_calls.pop(message[1], None)
                 if message[2]:
                     future.set_result(message[3])
                 else:
-                    future.set_exception(RemoteException(str(message[3])))
-                future = None
+                    if future is None:
+                        self.on_error_no_response_call(message[2], str(message[3]))
+                    else:
+                        future.set_exception(RemoteException(str(message[3])))
+                    future = None
             else:
                 raise Exception("Invalid message (Invalid message type)")
             message = None  # Do not hold reference to message while waiting for new message
+
+    async def _send_call(self, method_name, args, no_response):
+        assert isinstance(method_name, str)
+        message = [
+            self.MESSAGE_CALL_NO_RESPONSE if no_response else self.MESSAGE_CALL,
+            self.id_counter,
+            method_name,
+            args
+        ]
+        self.id_counter += 1
+        return self._send_message(message)
 
     async def _read_message(self):
         try:
@@ -91,13 +109,17 @@ class Connection:
             error_message
         ])
 
-    async def _run_method(self, service, call_id, method_name, args):
+    async def _run_method(self, service, call_id, method_name, args, no_response):
         method = getattr(service, method_name, None)
         if method is None or not getattr(method, "_abrpc_exposed", False):
-            await self._send_error(call_id, "Method '{}' does not exist".format(method_name))
+            await self._send_error(
+                call_id, "Method '{}' does not exist or is not exposed on '{}'"
+                    .format(method_name, type(service).__name__))
             return
         try:
             result = await method(*args)
+            if no_response:
+                return
             await self._send_message([
                 self.MESSAGE_RESPONSE,
                 call_id,

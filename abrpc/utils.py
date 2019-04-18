@@ -2,11 +2,11 @@ from .connection import Connection
 
 def on_connection(callback):
     async def helper(reader, writer):
-        try:
+        #try:
             connection = Connection((reader, writer))
             await callback(connection)
-        finally:
-            await connection.close()
+        #finally:
+        #    await connection.close()
     return helper
 
 
