@@ -14,7 +14,6 @@ class Connection:
     MESSAGE_RESPONSE = 1
     MESSAGE_CALL_NO_RESPONSE = 2
 
-
     def __init__(self, rw_pair):
         reader, writer = rw_pair
         self.reader = reader
