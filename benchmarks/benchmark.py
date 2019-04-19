@@ -7,7 +7,7 @@ import uvloop
 
 uvloop.install()
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from abrpc import Connection, on_connection, expose
 
@@ -21,7 +21,7 @@ def server_process():
     async def handle(conn):
         await conn.serve(ServerService())
 
-    f = asyncio.start_server(on_connection(handle), port=8100)
+    f = asyncio.start_server(on_connection(handle), port=8500)
     loop = asyncio.get_event_loop()
     loop.run_until_complete(f)
     loop.run_forever()
@@ -29,7 +29,7 @@ def server_process():
 
 async def client_process():
     COUNT = 20000
-    conn = Connection(await asyncio.open_connection("localhost", port=8100))
+    conn = Connection(await asyncio.open_connection("localhost", port=8500))
     asyncio.ensure_future(conn.serve())
 
     conn.set_on_error_no_response_call(lambda x, y: 0)
@@ -48,14 +48,14 @@ async def client_process():
     duration = end_time - start_time
     print("call_no_response: Calls/s: {}".format(COUNT/duration))
 
-    start_time = time.time()
-    fs = []
-    for _ in range(COUNT):
-        fs.append(conn.call("sum", 1, 2))
-    await asyncio.wait(fs)
-    end_time = time.time()
-    duration = end_time - start_time
-    print("call & wait_all: Calls/s: {}".format(COUNT/duration))
+    #start_time = time.time()
+    #fs = []
+    #for _ in range(COUNT):
+    #    fs.append(conn.call("sum", 1, 2))
+    #await asyncio.wait(fs)
+    #end_time = time.time()
+    #duration = end_time - start_time
+    #print("call & wait_all: Calls/s: {}".format(COUNT/duration))
 
 def main():
     p = multiprocessing.Process(target=server_process)

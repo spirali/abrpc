@@ -77,7 +77,7 @@ class Connection:
                 raise Exception("Invalid message (Invalid message type)")
             message = None  # Do not hold reference to message while waiting for new message
 
-    async def _send_call(self, method_name, args, no_response):
+    def _send_call(self, method_name, args, no_response):
         assert isinstance(method_name, str)
         message = [
             self.MESSAGE_CALL_NO_RESPONSE if no_response else self.MESSAGE_CALL,
@@ -100,8 +100,8 @@ class Connection:
         size = int.from_bytes(size, "big")
         return msgpack.unpackb(await self.reader.readexactly(size), raw=False)
 
-    async def _send_error(self, call_id, error_message):
-        self._send_message([
+    def _send_error(self, call_id, error_message):
+        return self._send_message([
             self.MESSAGE_RESPONSE,
             call_id,
             False,
@@ -111,9 +111,12 @@ class Connection:
     async def _run_method(self, service, call_id, method_name, args, no_response):
         method = getattr(service, method_name, None)
         if method is None or not getattr(method, "_abrpc_exposed", False):
-            await self._send_error(
-                call_id, "Method '{}' does not exist or is not exposed on '{}'"
-                    .format(method_name, type(service).__name__))
+            if service is None:
+                await self._send_error(call_id, "No service registered")
+            else:
+                await self._send_error(
+                    call_id, "Method '{}' does not exist or is not exposed on '{}'"
+                        .format(method_name, type(service).__name__))
             return
         try:
             result = await method(*args)
@@ -127,7 +130,6 @@ class Connection:
             ])
         except:
             await self._send_error(call_id, traceback.format_exc())
-            return
 
     def _send_message(self, message):
         data = msgpack.packb(message, use_bin_type=True)
