@@ -126,7 +126,7 @@ def test_call_no_response(test_env, port):
     async def main():
 
         conn = Connection(await asyncio.open_connection("localhost", port))
-        conn.set_on_error_no_response_call(error_callback)
+        conn.set_nr_error_handle(error_callback)
         asyncio.ensure_future(conn.serve())
         x = await conn.call_no_response("increment", 10)
         assert x is None

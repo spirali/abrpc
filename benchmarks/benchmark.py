@@ -32,7 +32,7 @@ async def client_process():
     conn = Connection(await asyncio.open_connection("localhost", port=8500))
     asyncio.ensure_future(conn.serve())
 
-    conn.set_on_error_no_response_call(lambda x, y: 0)
+    conn.set_nr_error_handle(lambda x, y: 0)
 
     start_time = time.time()
     for _ in range(COUNT):

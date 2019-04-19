@@ -22,10 +22,10 @@ class Connection:
 
         self.id_counter = 0
         self.running_calls = {}
-        self.on_error_no_response_call = None
+        self.nr_error_handle = None
 
-    def set_on_error_no_response_call(self, callback):
-        self.on_error_no_response_call = callback
+    def set_nr_error_handle(self, callback):
+        self.nr_error_handle = callback
 
     async def close(self):
         self.writer.close()
@@ -39,7 +39,7 @@ class Connection:
         return await future
 
     async def call_no_response(self, method_name, *args):
-        if self.on_error_no_response_call is None:
+        if self.nr_error_handle is None:
             raise Exception(
                 "No error handler set for no_response calls. Use set_on_error_resposen_call()")
         await self._send_call(method_name, args, True)
@@ -69,7 +69,7 @@ class Connection:
                     future.set_result(message[3])
                 else:
                     if future is None:
-                        self.on_error_no_response_call(message[2], str(message[3]))
+                        self.nr_error_handle(message[2], str(message[3]))
                     else:
                         future.set_exception(RemoteException(str(message[3])))
                     future = None
