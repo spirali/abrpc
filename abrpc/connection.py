@@ -30,7 +30,7 @@ class Connection:
     async def close(self):
         self.writer.close()
         # TODO: in 3.7
-        #await self.writer.wait_closed()
+        # await self.writer.wait_closed()
 
     async def call(self, method_name, *args):
         future = asyncio.Future()
@@ -41,7 +41,8 @@ class Connection:
     async def call_no_response(self, method_name, *args):
         if self.nr_error_handle is None:
             raise Exception(
-                "No error handler set for no_response calls. Use set_on_error_resposen_call()")
+                "No error handler set for no_response calls. "
+                "Use set_on_error_resposen_call()")
         await self._send_call(method_name, args, True)
 
     async def serve(self, service=None):
@@ -57,11 +58,13 @@ class Connection:
             # CALL
             if message[0] == self.MESSAGE_CALL:
                 asyncio.ensure_future(
-                    self._run_method(service, message[1], message[2], message[3], False))
+                    self._run_method(
+                        service, message[1], message[2], message[3], False))
             # CALL_NO_RESPONSE
             elif message[0] == self.MESSAGE_CALL_NO_RESPONSE:
                 asyncio.ensure_future(
-                    self._run_method(service, message[1], message[2], message[3], True))
+                    self._run_method(
+                        service, message[1], message[2], message[3], True))
             # RESPOSE
             elif message[0] == self.MESSAGE_RESPONSE:
                 future = self.running_calls.pop(message[1], None)
@@ -75,7 +78,9 @@ class Connection:
                     future = None
             else:
                 raise Exception("Invalid message (Invalid message type)")
-            message = None  # Do not hold reference to message while waiting for new message
+
+            # Do not hold reference to message while waiting for new message
+            message = None
 
     def _send_call(self, method_name, args, no_response):
         assert isinstance(method_name, str)
@@ -115,8 +120,8 @@ class Connection:
                 await self._send_error(call_id, "No service registered")
             else:
                 await self._send_error(
-                    call_id, "Method '{}' does not exist or is not exposed on '{}'"
-                        .format(method_name, type(service).__name__))
+                    call_id, "Method '{}' does not exist or is not exposed on '{}'".format(
+                        method_name, type(service).__name__))
             return
         try:
             result = await method(*args)
@@ -128,7 +133,7 @@ class Connection:
                 True,
                 result
             ])
-        except:
+        except Exception:
             await self._send_error(call_id, traceback.format_exc())
 
     def _send_message(self, message):

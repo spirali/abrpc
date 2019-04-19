@@ -1,3 +1,2 @@
-
-from .connection import Connection, RemoteException
-from .utils import on_connection, expose
+from .connection import Connection, RemoteException  # noqa
+from .utils import on_connection, expose  # noqa

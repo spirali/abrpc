@@ -78,13 +78,11 @@ def test_two_services(test_env, port):
         async def server_method(self):
             return "data"
 
-
     class ClientService:
 
         @expose()
         async def client_method(self, x, y):
             return x + y
-
 
     oneshot = asyncio.Future()
 
@@ -105,7 +103,6 @@ def test_two_services(test_env, port):
         await oneshot
 
     test_env.run(main())
-
 
 
 def test_call_no_response(test_env, port):

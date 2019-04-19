@@ -1,15 +1,15 @@
 import sys
 import os
 import pytest
-import time
+import asyncio
 
 TEST_DIR = os.path.dirname(__file__)
 ROOT_DIR = os.path.dirname(TEST_DIR)
 
 sys.path.insert(0, ROOT_DIR)
 
-from abrpc import on_connection
-import asyncio
+from abrpc import on_connection  # noqa
+
 
 @pytest.fixture()
 def port():
