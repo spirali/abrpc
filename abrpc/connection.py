@@ -23,6 +23,7 @@ class Connection:
         self.id_counter = 0
         self.running_calls = {}
         self.nr_error_handle = None
+        self.service_future = None
 
     def set_nr_error_handle(self, callback):
         self.nr_error_handle = callback
@@ -31,6 +32,10 @@ class Connection:
         self.writer.close()
         # TODO: in 3.7
         # await self.writer.wait_closed()
+
+        if self.service_future:
+            self.service_future.cancel()
+            self.service_future = None
 
     async def call(self, method_name, *args):
         future = asyncio.Future()
@@ -44,6 +49,11 @@ class Connection:
                 "No error handler set for no_response calls. "
                 "Use set_on_error_resposen_call()")
         await self._send_call(method_name, args, True)
+
+    def start_service(self, service=None):
+        if self.service_future:
+            raise Exception("Service future already running")
+        self.service_future = asyncio.ensure_future(self.serve(service))
 
     async def serve(self, service=None):
         assert not self.service_running

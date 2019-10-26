@@ -17,7 +17,7 @@ async def main():
     conn = Connection(await asyncio.open_connection("localhost", port=8500))
 
     # Setup infrastructure
-    asyncio.ensure_future(conn.serve(ClientService()))
+    conn.start_service(ClientService())
 
     # Call remote service
     result = await conn.call("sum", 3, 2)
