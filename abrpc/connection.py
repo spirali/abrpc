@@ -1,7 +1,8 @@
 import asyncio
-from asyncio import IncompleteReadError
-import msgpack
 import traceback
+from asyncio import IncompleteReadError
+
+import msgpack
 
 
 class RemoteException(Exception):
@@ -9,7 +10,6 @@ class RemoteException(Exception):
 
 
 class Connection:
-
     MESSAGE_CALL = 0
     MESSAGE_RESPONSE = 1
     MESSAGE_CALL_NO_RESPONSE = 2
@@ -64,7 +64,7 @@ class Connection:
             if message is None:
                 return
             if len(message) != 4:
-                    raise Exception("Invalid message (Invalid wrapper)")
+                raise Exception("Invalid message (Invalid wrapper)")
             # CALL
             if message[0] == self.MESSAGE_CALL:
                 asyncio.ensure_future(

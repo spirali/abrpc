@@ -1,5 +1,7 @@
 import asyncio
+
 import pytest
+
 from abrpc import Connection, RemoteException, expose
 
 
@@ -26,7 +28,6 @@ class MyCounterService():
 
 
 def test_call(test_env, port):
-
     service = MyCounterService()
 
     async def handle(conn):
@@ -71,7 +72,6 @@ def test_call(test_env, port):
 
 
 def test_two_services(test_env, port):
-
     class ServerService:
 
         @expose()
@@ -106,7 +106,6 @@ def test_two_services(test_env, port):
 
 
 def test_call_no_response(test_env, port):
-
     service = MyCounterService()
 
     async def handle(conn):
@@ -121,7 +120,6 @@ def test_call_no_response(test_env, port):
         error_msg[0] = msg
 
     async def main():
-
         conn = Connection(await asyncio.open_connection("localhost", port))
         conn.set_nr_error_handle(error_callback)
         conn.start_service()

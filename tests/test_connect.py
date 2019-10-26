@@ -4,7 +4,6 @@ from abrpc import on_connection
 
 
 def test_multiple_connect_close(port):
-
     connections = [0]
 
     async def handle_conn(conn):

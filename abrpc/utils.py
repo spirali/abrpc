@@ -5,6 +5,7 @@ def on_connection(callback):
     async def helper(reader, writer):
         connection = Connection((reader, writer))
         await callback(connection)
+
     return helper
 
 

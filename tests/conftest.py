@@ -1,7 +1,8 @@
-import sys
-import os
-import pytest
 import asyncio
+import os
+import sys
+
+import pytest
 
 TEST_DIR = os.path.dirname(__file__)
 ROOT_DIR = os.path.dirname(TEST_DIR)

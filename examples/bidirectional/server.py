@@ -1,8 +1,9 @@
-
 import asyncio
+
+import uvloop  # Optional; for better performance
+
 from abrpc import expose, on_connection
 
-import uvloop     # Optional; for better performance
 uvloop.install()
 
 
@@ -25,6 +26,7 @@ async def handle(conn):
     print("New connection")
     await conn.serve(ServerService())
     print("Connection closed")
+
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(
